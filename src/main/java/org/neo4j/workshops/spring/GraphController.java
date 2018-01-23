@@ -3,6 +3,8 @@ package org.neo4j.workshops.spring;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -54,5 +56,23 @@ public class GraphController
         return output;
     }
 
+    /**
+     * When the server receives a POST request to /people, run a write transaction to
+     * create a Person node with the name sent in request body.
+     */
+    @RequestMapping(method = RequestMethod.POST, path ="/people")
+    public Map<String, Object> postPeople(
+            @RequestBody Map<String, Object> params
+    ) {
+        try ( Session session = driver.session() ) {
+            Node created = session.writeTransaction( tx -> {
+                StatementResult result = tx.run("CREATE (p:Person {name: {name} }) RETURN p", params);
+
+                return result.single().get("p").asNode();
+            } );
+
+            return created.asMap();
+        }
+    }
 
 }
